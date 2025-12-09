@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advent Calendar 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* Make text unselectable because it ruins the experience */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: 'Georgia', serif;
+        }
+
+        .calendar-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calendar-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .doors-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .doors-wrapper {
+            position: absolute;
+            width: 778px;
+            height: 518px;
+            pointer-events: auto;
+        }
+
+        .door {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            perspective: 500px;
+            z-index: 10;
+        }
+
+        .door-content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 50%, #d0d0d0 100%);
+            box-shadow: inset 3px 3px 8px rgba(0,0,0,0.3), inset -2px -2px 6px rgba(255,255,255,0.8);
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .door-inner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease-in-out;
+            transform-origin: left center;
+            z-index: 2;
+        }
+
+        .door.open .door-inner {
+            transform: rotateY(-130deg);
+        }
+
+        .door-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.5);
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        .door-front:hover {
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        .door-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        .christmas-symbol {
+            font-size: 36px;
+            animation: glow 1.5s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 5px gold);
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 3px gold); }
+            to { filter: drop-shadow(0 0 10px gold); }
+        }
+
+        /* Snow effect */
+        .snowflakes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            color: white;
+            font-size: 1em;
+            text-shadow: 0 0 5px rgba(255,255,255,0.8);
+            animation: fall linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10px) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        /* Popup styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        .popup {
+            background: linear-gradient(135deg, #2d5016 0%, #1a3009 100%);
+            border: 4px solid #c4a747;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(196, 167, 71, 0.5);
+            position: relative;
+            animation: popupIn 0.3s ease-out;
+        }
+
+        @keyframes popupIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .popup-header {
+            font-size: 22px;
+            color: #c4a747;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .popup-quote-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 10px;
+            text-align: left;
+        }
+
+        .popup-quote-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .popup-quote-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .popup-quote-container::-webkit-scrollbar-thumb {
+            background: #c4a747;
+            border-radius: 4px;
+        }
+
+        .popup-quote {
+            color: #f5f5dc;
+            font-size: 15px;
+            line-height: 1.7;
+            font-style: normal;
+        }
+
+        .popup-quote .verse {
+            display: block;
+            margin-bottom: 12px;
+            text-indent: 0;
+        }
+
+        .popup-quote .verse-num {
+            color: #c4a747;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .popup-reference {
+            color: #c4a747;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .popup-close {
+            background: #8b0000;
+            color: white;
+            border: 2px solid #c4a747;
+            padding: 10px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .popup-close:hover {
+            background: #a52a2a;
+            transform: scale(1.05);
+        }
+
+        .popup-decoration {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        /* Audio controls */
+        .audio-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(26, 48, 9, 0.85);
+            padding: 10px 15px;
+            border-radius: 25px;
+            border: 2px solid rgba(196, 167, 71, 0.6);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .audio-btn {
+            background: none;
+            border: none;
+            color: #c4a747;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-btn:hover {
+            color: #f5f5dc;
+            transform: scale(1.1);
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(196, 167, 71, 0.3);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #c4a747;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            background: #f5f5dc;
+            transform: scale(1.2);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #c4a747;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-container">
+        <img src="ComeLetUsAdoreHimBG.png" alt="Advent Calendar" class="calendar-image" id="calendarImage">
+        <div class="doors-container">
+            <div class="doors-wrapper" id="doorsWrapper">
+                <!-- Doors will be populated here into doorsWrapper by CreateDoors -->
+            </div>
+        </div>
+    </div>
+
+    <!-- our snowflake container, used below in createSnowflakes -->
+    <div class="snowflakes" id="snowflakes"></div>
+
+    <!-- Audio Controls -->
+    <div class="audio-controls" id="audioControls">
+        <button class="audio-btn" id="playPauseBtn" title="Play/Pause">🎵</button>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" title="Volume">
+        <button class="audio-btn" id="muteBtn" title="Mute">🔊</button>
+    </div>
+
+    <!-- hidden by default, shown by popup-overlay.active css tag -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup">
+            <div class="popup-decoration">🌟</div>
+            <div class="popup-header">Day <span id="popupDay">1</span></div>
+            <div class="popup-reference" id="popupReference"></div>
+            <div class="popup-quote-container">
+                <div class="popup-quote" id="popupQuote"></div>
+            </div>
+            <button class="popup-close" onclick="closePopup()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // scripture quotes
+        const quotes = [
+
+            {
+                verses: [
+                    { num: 13, text: "And it came to pass that I looked and beheld the great city of Jerusalem, and also other cities. And I beheld the city of Nazareth; and in the city of Nazareth I beheld a virgin, and she was exceedingly fair and white." },
+                    { num: 14, text: "And it came to pass that I saw the heavens open; and an angel came down and stood before me; and he said unto me: Nephi, what beholdest thou?" },
+                    { num: 15, text: "And I said unto him: A virgin, most beautiful and fair above all other virgins." },
+                    { num: 16, text: "And he said unto me: Knowest thou the condescension of God?" },
+                    { num: 17, text: "And I said unto him: I know that he loveth his children; nevertheless, I do not know the meaning of all things." },
+                    { num: 18, text: "And he said unto me: Behold, the virgin whom thou seest is the mother of the Son of God, after the manner of the flesh." },
+                    { num: 19, text: "And it came to pass that I beheld that she was carried away in the Spirit; and after she had been carried away in the Spirit for the space of a time the angel spake unto me, saying: Look!" },
+                    { num: 20, text: "And I looked and beheld the virgin again, bearing a child in her arms." },
+                    { num: 21, text: "And the angel said unto me: Behold the Lamb of God, yea, even the Son of the Eternal Father! Knowest thou the meaning of the tree which thy father saw?" }
+                ],
+                reference: "1 Nephi 11:13–21",
+                symbol: "👑"
+            },
+            {
+                verses: [
+                    { num: 8, text: "And behold he cometh, according to the words of the angel, in six hundred years from the time my father left Jerusalem." }
+                ],
+                reference: "1 Nephi 19:8",
+                symbol: "📜"
+            },
+            {
+                verses: [
+                    { num: 19, text: "For according to the words of the prophets, the Messiah cometh in six hundred years from the time that my father left Jerusalem; and according to the words of the prophets, and also the word of the angel of God, his name shall be Jesus Christ, the Son of God." }
+                ],
+                reference: "2 Nephi 25:19",
+                symbol: "📖"
+            },
+            {
+                verses: [
+                    { num: 9, text: "But behold, the Spirit hath said this much unto me, saying: Cry unto this people, saying—Repent ye, and prepare the way of the Lord, and walk in his paths, which are straight; for behold, the kingdom of heaven is at hand, and the Son of God cometh upon the face of the earth." },
+                    { num: 10, text: "And behold, he shall be born of Mary, at Jerusalem which is the land of our forefathers, she being a virgin, a precious and chosen vessel, who shall be overshadowed and conceive by the power of the Holy Ghost, and bring forth a son, yea, even the Son of God." }
+                ],
+                reference: "Alma 7:9–10",
+                symbol: "🙏"
+            },
+            {
+                verses: [
+                    { num: 1, text: "In the beginning was the Word, and the Word was with God, and the Word was God." },
+                    { num: 2, text: "The same was in the beginning with God." },
+                    { num: 3, text: "All things were made by him; and without him was not any thing made that was made." },
+                    { num: 4, text: "In him was life; and the life was the light of men." },
+                    { num: 5, text: "And the light shineth in darkness; and the darkness comprehended it not." }
+                ],
+                reference: "John 1:1–5",
+                symbol: "✨"
+            },
+            {
+                verses: [
+                    { num: 14, text: "And the Word was made flesh, and dwelt among us, (and we beheld his glory, the glory as of the only begotten of the Father,) full of grace and truth." }
+                ],
+                reference: "John 1:14",
+                symbol: "🕊️"
+            },
+            {
+                verses: [
+                    { num: 9, text: "That was the true Light, which lighteth every man that cometh into the world." }
+                ],
+                reference: "John 1:9",
+                symbol: "☀️"
+            },
+            {
+                verses: [
+                    { num: 7, text: "Thus he shewed me: and, behold, the Lord stood upon a wall made by a plumbline, with a plumbline in his hand." },
+                    { num: 8, text: "And the Lord said unto me, Amos, what seest thou? And I said, A plumbline. Then said the Lord, Behold, I will set a plumbline in the midst of my people Israel: I will not again pass by them any more:" }
+                ],
+                reference: "Amos 7:7–8",
+                symbol: "📐"
+            },
+            {
+                verses: [
+                    { num: 8, text: "And he shall be called Jesus Christ, the Son of God, the Father of heaven and earth, the Creator of all things from the beginning; and his mother shall be called Mary." }
+                ],
+                reference: "Mosiah 3:8",
+                symbol: "🌟"
+            },
+            {
+                verses: [
+                    { num: 9, text: "And now, my son, I have told you this that ye may learn wisdom, that ye may learn of me that there is no other way or means whereby man can be saved, only in and through Christ. Behold, he is the life and the light of the world. Behold, he is the word of truth and righteousness." }
+                ],
+                reference: "Alma 38:9",
+                symbol: "💡"
+            },
+            {
+                verses: [
+                    { num: 1, text: "The Lord is my light and my salvation; whom shall I fear? the Lord is the strength of my life; of whom shall I be afraid?" }
+                ],
+                reference: "Psalm 27:1",
+                symbol: "🛡️"
+            },
+            {
+                verses: [
+                    { num: 1, text: "Arise, shine; for thy light is come, and the glory of the Lord is risen upon thee." }
+                ],
+                reference: "Isaiah 60:1",
+                symbol: "🌅"
+            },
+
+            {
+                verses: [
+                    { num: 26, text: "And in the sixth month the angel Gabriel was sent from God unto a city of Galilee, named Nazareth," },
+                    { num: 27, text: "To a virgin espoused to a man whose name was Joseph, of the house of David; and the virgin's name was Mary." },
+                    { num: 28, text: "And the angel came in unto her, and said, Hail, thou that art highly favoured, the Lord is with thee: blessed art thou among women." },
+                    { num: 29, text: "And when she saw him, she was troubled at his saying, and cast in her mind what manner of salutation this should be." },
+                    { num: 30, text: "And the angel said unto her, Fear not, Mary: for thou hast found favour with God." },
+                    { num: 31, text: "And, behold, thou shalt conceive in thy womb, and bring forth a son, and shalt call his name Jesus." },
+                    { num: 32, text: "He shall be great, and shall be called the Son of the Highest: and the Lord God shall give unto him the throne of his father David:" },
+                    { num: 33, text: "And he shall reign over the house of Jacob for ever; and of his kingdom there shall be no end." },
+                    { num: 34, text: "Then said Mary unto the angel, How shall this be, seeing I know not a man?" },
+                    { num: 35, text: "And the angel answered and said unto her, The Holy Ghost shall come upon thee, and the power of the Highest shall overshadow thee: therefore also that holy thing which shall be born of thee shall be called the Son of God." },
+                    { num: 36, text: "And, behold, thy cousin Elisabeth, she hath also conceived a son in her old age: and this is the sixth month with her, who was called barren." },
+                    { num: 37, text: "For with God nothing shall be impossible." },
+                    { num: 38, text: "And Mary said, Behold the handmaid of the Lord; be it unto me according to thy word. And the angel departed from her." }
+                ],
+                reference: "Luke 1:26–38",
+                symbol: "⭐"
+            },
+            {
+                verses: [
+                    { num: 4, text: "And it came to pass that in the commencement of the ninety and second year, behold, the prophecies of the prophets began to be fulfilled more fully; for there began to be greater signs and greater miracles wrought among the people." },
+                    { num: 5, text: "But there were some who began to say that the time was past for the words to be fulfilled, which were spoken by Samuel, the Lamanite." },
+                    { num: 6, text: "And they began to rejoice over their brethren, saying: Behold the time is past, and the words of Samuel are not fulfilled; therefore, your joy and your faith concerning this thing hath been vain." },
+                    { num: 7, text: "And it came to pass that they did make a great uproar throughout the land; and the people who believed began to be very sorrowful, lest by any means those things which had been spoken might not come to pass." },
+                    { num: 8, text: "But behold, they did watch steadfastly for that day and that night and that day which should be as one day as if there were no night, that they might know that their faith had not been vain." },
+                    { num: 9, text: "Now it came to pass that there was a day set apart by the unbelievers, that all those who believed in those traditions should be put to death except the sign should come to pass, which had been given by Samuel the prophet." }
+                ],
+                reference: "3 Nephi 1:4–9",
+                symbol: "🎄"
+            },
+            {
+                verses: [
+                    { num: 39, text: "And Mary arose in those days, and went into the hill country with haste, into a city of Juda;" },
+                    { num: 40, text: "And entered into the house of Zacharias, and saluted Elisabeth." },
+                    { num: 41, text: "And it came to pass, that, when Elisabeth heard the salutation of Mary, the babe leaped in her womb; and Elisabeth was filled with the Holy Ghost:" },
+                    { num: 42, text: "And she spake out with a loud voice, and said, Blessed art thou among women, and blessed is the fruit of thy womb." },
+                    { num: 43, text: "And whence is this to me, that the mother of my Lord should come to me?" },
+                    { num: 44, text: "For, lo, as soon as the voice of thy salutation sounded in mine ears, the babe leaped in my womb for joy." },
+                    { num: 45, text: "And blessed is she that believed: for there shall be a performance of those things which were told her from the Lord." }
+                ],
+                reference: "Luke 1:39–45",
+                symbol: "🔔"
+            },
+            {
+                verses: [
+                    { num: 19, text: "O the greatness of the mercy of our God, the Holy One of Israel! For he delivereth his saints from that awful monster the devil, and death, and hell, and that lake of fire and brimstone, which is endless torment." },
+                    { num: 20, text: "O how great the holiness of our God! For he knoweth all things, and there is not anything save he knows it." },
+                    { num: 21, text: "And he cometh into the world that he may save all men if they will hearken unto his voice; for behold, he suffereth the pains of all men, yea, the pains of every living creature, both men, women, and children, who belong to the family of Adam." },
+                    { num: 22, text: "And he suffereth this that the resurrection might pass upon all men, that all might stand before him at the great and judgment day." }
+                ],
+                reference: "2 Nephi 9:19–22",
+                symbol: "🕯️"
+            },
+            {
+                verses: [
+                    { num: 18, text: "Now the birth of Jesus Christ was on this wise: When as his mother Mary was espoused to Joseph, before they came together, she was found with child of the Holy Ghost." },
+                    { num: 19, text: "Then Joseph her husband, being a just man, and not willing to make her a publick example, was minded to put her away privily." },
+                    { num: 20, text: "But while he thought on these things, behold, the angel of the Lord appeared unto him in a dream, saying, Joseph, thou son of David, fear not to take unto thee Mary thy wife: for that which is conceived in her is of the Holy Ghost." },
+                    { num: 21, text: "And she shall bring forth a son, and thou shalt call his name Jesus: for he shall save his people from their sins." },
+                    { num: 22, text: "Now all this was done, that it might be fulfilled which was spoken of the Lord by the prophet, saying," },
+                    { num: 23, text: "Behold, a virgin shall be with child, and shall bring forth a son, and they shall call his name Emmanuel, which being interpreted is, God with us." },
+                    { num: 24, text: "Then Joseph being raised from sleep did as the angel of the Lord had bidden him, and took unto him his wife:" },
+                    { num: 25, text: "And knew her not till she had brought forth her firstborn son: and he called his name Jesus." }
+                ],
+                reference: "Matthew 1:18–25",
+                symbol: "🎁"
+            },
+            {
+                verses: [
+                    { num: 12, text: "And it came to pass that he cried mightily unto the Lord all that day; and behold, the voice of the Lord came unto him, saying:" },
+                    { num: 13, text: "Lift up your head and be of good cheer; for behold, the time is at hand, and on this night shall the sign be given, and on the morrow come I into the world, to show unto the world that I will fulfil all that which I have caused to be spoken by the mouth of my holy prophets." },
+                    { num: 14, text: "Behold, I come unto my own, to fulfil all things which I have made known unto the children of men from the foundation of the world, and to do the will, both of the Father and of the Son—of the Father because of me, and of the Son because of my flesh. And behold, the time is at hand, and this night shall the sign be given." },
+                    { num: 15, text: "And it came to pass that the words which came unto Nephi were fulfilled, according as they had been spoken; for behold, at the going down of the sun there was no darkness; and the people began to be astonished because there was no darkness when the night came." },
+                    { num: 16, text: "And there were many, who had not believed the words of the prophets, who fell to the earth and became as if they were dead, for they knew that the great plan of destruction which they had laid for those who believed in the words of the prophets had been frustrated; for the sign which had been given was already at hand." },
+                    { num: 17, text: "And they began to know that the Son of God must shortly appear; yea, in fine, all the people upon the face of the whole earth from the west to the east, both in the land north and in the land south, were so exceedingly astonished that they fell to the earth." },
+                    { num: 18, text: "For they knew that the prophets had testified of these things for many years, and that the sign which had been given was already at hand; and they began to fear because of their iniquity and their unbelief." },
+                    { num: 19, text: "And it came to pass that there was no darkness in all that night, but it was as light as though it was mid-day. And it came to pass that the sun did rise in the morning again, according to its proper order; and they knew that it was the day that the Lord should be born, because of the sign which had been given." },
+                    { num: 20, text: "And it had come to pass, yea, all things, every whit, according to the words of the prophets." },
+                    { num: 21, text: "And it came to pass also that a new star did appear, according to the word." }
+                ],
+                reference: "3 Nephi 1:12–21",
+                symbol: "❄️"
+            },
+            {
+                verses: [
+                    { num: 1, text: "Now when Jesus was born in Bethlehem of Judæa in the days of Herod the king, behold, there came wise men from the east to Jerusalem," },
+                    { num: 2, text: "Saying, Where is he that is born King of the Jews? for we have seen his star in the east, and are come to worship him." },
+                    { num: 3, text: "When Herod the king had heard these things, he was troubled, and all Jerusalem with him." },
+                    { num: 4, text: "And when he had gathered all the chief priests and scribes of the people together, he demanded of them where Christ should be born." },
+                    { num: 5, text: "And they said unto him, In Bethlehem of Judæa: for thus it is written by the prophet," },
+                    { num: 6, text: "And thou Bethlehem, in the land of Juda, art not the least among the princes of Juda: for out of thee shall come a Governor, that shall rule my people Israel." },
+                    { num: 7, text: "Then Herod, when he had privily called the wise men, inquired of them diligently what time the star appeared." },
+                    { num: 8, text: "And he sent them to Bethlehem, and said, Go and search diligently for the young child; and when ye have found him, bring me word again, that I may come and worship him also." },
+                    { num: 9, text: "When they had heard the king, they departed; and, lo, the star, which they saw in the east, went before them, till it came and stood over where the young child was." },
+                    { num: 10, text: "When they saw the star, they rejoiced with exceeding great joy." },
+                    { num: 11, text: "And when they were come into the house, they saw the young child with Mary his mother, and fell down, and worshipped him: and when they had opened their treasures, they presented unto him gifts; gold, and frankincense, and myrrh." },
+                    { num: 12, text: "And being warned of God in a dream that they should not return to Herod, they departed into their own country another way." }
+                ],
+                reference: "Matthew 2:1–12",
+                symbol: "🌟"
+            },
+            {
+                verses: [
+                    { num: 2, text: "And behold, he said unto them: Behold, I give unto you a sign; for five years more cometh, and behold, then cometh the Son of God to redeem all those who shall believe on his name." },
+                    { num: 3, text: "And behold, this will I give unto you for a sign at the time of his coming; for behold, there shall be great lights in heaven, insomuch that in the night before he cometh there shall be no darkness, insomuch that it shall appear unto man as if it was day." },
+                    { num: 4, text: "Therefore, there shall be one day and a night and a day, as if it were one day and there were no night; and this shall be unto you for a sign; for ye shall know of the rising of the sun and also of its setting; therefore they shall know of a surety that there shall be two days and a night; nevertheless the night shall not be darkened; and it shall be the night before he is born." },
+                    { num: 5, text: "And behold, there shall a new star arise, such an one as ye never have beheld; and this also shall be a sign unto you." },
+                    { num: 6, text: "And behold this is not all, there shall be many signs and wonders in heaven." }
+                ],
+                reference: "Helaman 14:2–6",
+                symbol: "✨"
+            },
+            {
+                verses: [
+                    { num: 1, text: "And it came to pass in those days, that there went out a decree from Cæsar Augustus, that all the world should be taxed." },
+                    { num: 2, text: "(And this taxing was first made when Cyrenius was governor of Syria.)" },
+                    { num: 3, text: "And all went to be taxed, every one into his own city." },
+                    { num: 4, text: "And Joseph also went up from Galilee, out of the city of Nazareth, into Judæa, unto the city of David, which is called Bethlehem; (because he was of the house and lineage of David:)" },
+                    { num: 5, text: "To be taxed with Mary his espoused wife, being great with child." },
+                    { num: 6, text: "And so it was, that, while they were there, the days were accomplished that she should be delivered." },
+                    { num: 7, text: "And she brought forth her firstborn son, and wrapped him in swaddling clothes, and laid him in a manger; because there was no room for them in the inn." }
+                ],
+                reference: "Luke 2:1–7",
+                symbol: "🎀"
+            },
+            {
+                verses: [
+                    { num: 6, text: "For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace." },
+                    { num: 7, text: "Of the increase of his government and peace there shall be no end, upon the throne of David, and upon his kingdom, to order it, and to establish it with judgment and with justice from henceforth even for ever. The zeal of the Lord of hosts will perform this." }
+                ],
+                reference: "Isaiah 9:6–7",
+                symbol: "👼"
+            },
+            {
+                verses: [
+                    { num: 8, text: "And there were in the same country shepherds abiding in the field, keeping watch over their flock by night." },
+                    { num: 9, text: "And, lo, the angel of the Lord came upon them, and the glory of the Lord shone round about them: and they were sore afraid." },
+                    { num: 10, text: "And the angel said unto them, Fear not: for, behold, I bring you good tidings of great joy, which shall be to all people." },
+                    { num: 11, text: "For unto you is born this day in the city of David a Saviour, which is Christ the Lord." },
+                    { num: 12, text: "And this shall be a sign unto you; Ye shall find the babe wrapped in swaddling clothes, lying in a manger." },
+                    { num: 13, text: "And suddenly there was with the angel a multitude of the heavenly host praising God, and saying," },
+                    { num: 14, text: "Glory to God in the highest, and on earth peace, good will toward men." },
+                    { num: 15, text: "And it came to pass, as the angels were gone away from them into heaven, the shepherds said one to another, Let us now go even unto Bethlehem, and see this thing which is come to pass, which the Lord hath made known unto us." },
+                    { num: 16, text: "And they came with haste, and found Mary, and Joseph, and the babe lying in a manger." },
+                    { num: 17, text: "And when they had seen it, they made known abroad the saying which was told them concerning this child." },
+                    { num: 18, text: "And all they that heard it wondered at those things which were told them by the shepherds." },
+                    { num: 19, text: "But Mary kept all these things, and pondered them in her heart." },
+                    { num: 20, text: "And the shepherds returned, glorifying and praising God for all the things that they had heard and seen, as it was told unto them." }
+                ],
+                reference: "Luke 2:8–20",
+                symbol: "💫"
+            },
+            {
+                verses: [
+                    { num: 14, text: "Therefore the Lord himself shall give you a sign; Behold, a virgin shall conceive, and bear a son, and shall call his name Immanuel." }
+                ],
+                reference: "Isaiah 7:14",
+                symbol: "🎅"
+            }
+
+
+        ];
+
+        // Door positions
+        const doorPositions = [
+            { x: 200, y: 150 },   // 1 
+            { x: 500, y: 100 },   // 2 
+            { x: 800, y: 120 },   // 3 
+            { x: 1100, y: 160 },  // 4 
+            { x: 150, y: 350 },   // 5 
+            { x: 700, y: 300 },   // 6 
+            { x: 1250, y: 350 },  // 7 
+            { x: 400, y: 450 },   // 8 
+            { x: 1050, y: 450 },  // 9 
+            { x: 700, y: 550 },   // 10
+            { x: 250, y: 650 },   // 11
+            { x: 600, y: 700 },   // 12
+            { x: 1150, y: 680 },  // 13
+            { x: 1300, y: 550 },  // 14
+            { x: 350, y: 200 },   // 15
+            { x: 900, y: 250 },   // 16
+            { x: 1200, y: 250 },  // 17
+            { x: 100, y: 500 },   // 18
+            { x: 520, y: 350 },   // 19
+            { x: 850, y: 600 },   // 20
+            { x: 400, y: 800 },   // 21
+            { x: 800, y: 760 },   // 22
+            { x: 1100, y: 800 },  // 23
+            { x: 1300, y: 750 }   // 24
+        ];
+
+        // Create doors
+        function createDoors() {
+            const wrapper = document.getElementById('doorsWrapper');
+            const img = document.getElementById('calendarImage');
+            
+            doorPositions.forEach((pos, index) => {
+                const door = document.createElement('div');
+                door.className = 'door';
+                door.style.left = pos.x + 'px';
+                door.style.top = pos.y + 'px';
+                door.dataset.day = index + 1;
+                
+                door.innerHTML = `
+                    <div class="door-content">
+                        <span class="christmas-symbol" onclick="event.stopPropagation(); showQuote(${index + 1})">${quotes[index].symbol}</span>
+                    </div>
+                    <div class="door-inner">
+                        <div class="door-front">${index + 1}</div>
+                        <div class="door-back"></div>
+                    </div>
+                `;
+                
+                door.querySelector('.door-inner').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    door.classList.toggle('open');
+                });
+                
+                wrapper.appendChild(door);
+            });
+        }
+
+        function showQuote(day) {
+            const quote = quotes[day - 1];
+            document.getElementById('popupDay').textContent = day;
+            document.getElementById('popupReference').textContent = quote.reference;
+            
+            const versesHtml = quote.verses.map(v => 
+                `<span class="verse"><span class="verse-num">${v.num}</span>${v.text}</span>`
+            ).join('');
+            document.getElementById('popupQuote').innerHTML = versesHtml;
+            
+            document.querySelector('.popup-quote-container').scrollTop = 0;
+            
+            document.getElementById('popupOverlay').classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').classList.remove('active');
+        }
+
+        // Close popup when clicking overlay, better UX
+        document.getElementById('popupOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+        // Create snowflakes, yay!
+        function createSnowflakes() {
+            const container = document.getElementById('snowflakes');
+            const snowflakeChars = ['❄', '❅', '❆', '•', '°'];
+            
+            // 80 snowflakes.
+            for (let i = 0; i < 80; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.textContent = snowflakeChars[Math.floor(Math.random() * snowflakeChars.length)];
+                snowflake.style.left = Math.random() * 100 + '%';
+                snowflake.style.fontSize = (Math.random() * 10 + 8) + 'px';
+                snowflake.style.opacity = Math.random() * 0.6 + 0.4;
+                
+                const duration = Math.random() * 5 + 5;
+                snowflake.style.animationDuration = duration + 's';
+                
+                // Start snowflakes at random positions so we don't have to wait.
+                const randomStart = Math.random() * duration;
+                snowflake.style.animationDelay = `-${randomStart}s`;
+                
+                container.appendChild(snowflake);
+            }
+        }
+
+        // Adjust doors position based on image size
+        function adjustDoorsPosition() {
+            const img = document.getElementById('calendarImage');
+            const wrapper = document.getElementById('doorsWrapper');
+            const container = document.querySelector('.doors-container');
+            
+            const imgRect = img.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            // Calculate the image's position relative to the doors-container
+            const imgLeft = imgRect.left - containerRect.left;
+            const imgTop = imgRect.top - containerRect.top;
+            const imgWidth = imgRect.width;
+            const imgHeight = imgRect.height;
+            
+            // Position the wrapper exactly over the image
+            wrapper.style.left = imgLeft + 'px';
+            wrapper.style.top = imgTop + 'px';
+            wrapper.style.width = imgWidth + 'px';
+            wrapper.style.height = imgHeight + 'px';
+            
+            // handle window scale by normalizing to image width, 
+            // TODO: get the image size programmatically?
+            const scale = imgWidth / 1400; // original image width
+            
+            // Adjust each door position
+            const doors = wrapper.querySelectorAll('.door');
+            doors.forEach((door, index) => {
+                door.style.left = (doorPositions[index].x * scale) + 'px';
+                door.style.top = (doorPositions[index].y * scale) + 'px';
+                door.style.width = (90 * scale) + 'px';
+                door.style.height = (90 * scale) + 'px';
+            });
+        }
+
+        window.onload = function() {
+            const img = document.getElementById('calendarImage');
+            
+            function initAfterImageLoad() {
+                createDoors();
+                createSnowflakes();
+                adjustDoorsPosition();
+                applyDoorBackgrounds();
+            }
+            
+            if (img.complete) {
+                initAfterImageLoad();
+            } else {
+                img.onload = initAfterImageLoad;
+            }
+        };
+
+        // stamp BG image out for each door
+        function applyDoorBackgrounds() {
+            const img = document.getElementById('calendarImage');
+            const wrapper = document.getElementById('doorsWrapper');
+            const doors = wrapper.querySelectorAll('.door');
+            
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const scale = wrapperRect.width / 1400; // original image width
+            
+            doors.forEach((door, index) => {
+                const doorFront = door.querySelector('.door-front');
+                
+                // Use original positions scaled to current size for alignment
+                const posX = doorPositions[index].x * scale;
+                const posY = doorPositions[index].y * scale;
+                
+                // Set background image to match the underlying image section using CSS
+                doorFront.style.backgroundImage = `url('${img.src}')`;
+                doorFront.style.backgroundSize = `${wrapperRect.width}px ${wrapperRect.height}px`;
+                doorFront.style.backgroundPosition = `-${posX}px -${posY}px`;
+            });
+        }
+
+        window.onresize = function() {
+            adjustDoorsPosition();
+            // !!! HACK - use setTimeout because of race condition with the layout
+            setTimeout(applyDoorBackgrounds, 50);
+        };
+
+        // Audio Player
+        let audioContext = null;
+        let audioElement = null;
+        let isPlaying = false;
+        let isMuted = false;
+        let audioInitialized = false;
+
+        function initAudio() {
+            if (audioInitialized) return;
+            
+            audioElement = new Audio('ComeAllYeFaithful.mp3');
+            audioElement.loop = true;
+            audioElement.volume = 0.5;
+            
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaElementSource(audioElement);
+                source.connect(audioContext.destination);
+            } catch (e) {
+                console.log('AudioContext not available, using standard audio');
+            }
+            
+            audioInitialized = true;
+        }
+
+        function togglePlayPause() {
+            initAudio();
+            
+            // Resume AudioContext if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            if (isPlaying) {
+                audioElement.pause();
+                document.getElementById('playPauseBtn').textContent = '🎵';
+            } else {
+                audioElement.play().catch(e => {
+                    console.log('Playback failed:', e);
+                });
+                document.getElementById('playPauseBtn').textContent = '⏸️';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function updateVolume(value) {
+            if (audioElement) {
+                audioElement.volume = value / 100;
+                // Update mute button icon based on volume
+                if (value == 0) {
+                    document.getElementById('muteBtn').textContent = '🔇';
+                } else if (value < 50) {
+                    document.getElementById('muteBtn').textContent = '🔉';
+                } else {
+                    document.getElementById('muteBtn').textContent = '🔊';
+                }
+            }
+        }
+
+        function toggleMute() {
+            if (!audioElement) return;
+            
+            isMuted = !isMuted;
+            audioElement.muted = isMuted;
+            
+            if (isMuted) {
+                document.getElementById('muteBtn').textContent = '🔇';
+            } else {
+                const volume = document.getElementById('volumeSlider').value;
+                if (volume < 50) {
+                    document.getElementById('muteBtn').textContent = '🔉';
+                } else {
+                    document.getElementById('muteBtn').textContent = '🔊';
+                }
+            }
+        }
+
+        document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+        document.getElementById('volumeSlider').addEventListener('input', (e) => updateVolume(e.target.value));
+        document.getElementById('muteBtn').addEventListener('click', toggleMute);
+    </script>
+</body>
+</html>
